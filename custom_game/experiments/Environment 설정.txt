@@ -1,0 +1,18 @@
+[state]
+display image -> 크기 변환 필요
+
+[action]
+multi action : (1) direction (2) jump
+
+[reward]
+<양의 보상>
+(1) goal 도착 : 10
+(2) coin 획득 : 5
+(3) goal과 거리가 가까워짐 : 1
+
+<음의 보상>
+(4) goal과 거리가 가까워짐 : -1
+(5) 몬스터로부터 공격 : -5
+(6) 캐릭터 죽음 : -10
+
+[
