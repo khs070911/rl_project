@@ -30,7 +30,7 @@ class Game:
 
 
 	def create_level(self,current_level):
-		self.level = Level(current_level,screen,self.create_overworld,self.change_coins,self.change_health)
+		self.level = Level(current_level,screen,self.change_coins,self.change_health)
 		self.status = 'level'
 		self.overworld_bg_music.stop()
 		self.level_bg_music.play(loops = -1)
@@ -60,13 +60,18 @@ class Game:
 			self.overworld_bg_music.play(loops = -1)
 
 	def run(self):
-		if self.status == 'overworld':
-			self.overworld.run()
-		else:
-			self.level.run()
-			self.ui.show_health(self.cur_health,self.max_health)
-			self.ui.show_coins(self.coins)
-			self.check_game_over()
+		# if self.status == 'overworld':
+		# 	self.overworld.run()
+   
+		# 	return None, None, None, None, None
+		# else:
+  
+		check_death, check_win, check_coin, check_enemy, kill_enemy = self.level.run()
+		self.ui.show_health(self.cur_health,self.max_health)
+		self.ui.show_coins(self.coins)
+		self.check_game_over()
+
+		return check_death, check_win, check_coin, check_enemy, kill_enemy
 
 # Pygame setup
 pygame.init()
@@ -96,7 +101,7 @@ while True:
 		space = keys[pygame.K_SPACE]
 		game.level.player.sprite.get_input(act, space)
   
-		print(game.coins)
+		# print(game.coins, game.level.get_player_from_goal())
 				
 		if event.type == pygame.QUIT:
       
@@ -113,7 +118,14 @@ while True:
 			sys.exit()
 	
 	screen.fill('grey')
-	game.run()
+	check_death, check_win, check_coin, check_enemy, kill_enemy = game.run()
+ 
+	if check_coin:
+		print("add coin")
+	if check_enemy and not kill_enemy:
+		print("damage from enemy")
+	if check_enemy and kill_enemy:
+		print("kill enemy")
 
 	pygame.display.update()
 	clock.tick(60)

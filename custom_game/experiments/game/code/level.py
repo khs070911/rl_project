@@ -9,7 +9,7 @@ from particles import ParticleEffect
 from game_data import levels
 
 class Level:
-	def __init__(self,current_level,surface,create_overworld,change_coins,change_health):
+	def __init__(self,current_level,surface,change_coins,change_health):
 		# general setup
 		self.display_surface = surface
 		self.world_shift = 0
@@ -20,7 +20,7 @@ class Level:
 		# self.stomp_sound = pygame.mixer.Sound('../audio/effects/stomp.wav')
 
 		# overworld connection 
-		self.create_overworld = create_overworld
+		# self.create_overworld = create_overworld
 		self.current_level = current_level
 		level_data = levels[self.current_level]
 		self.new_max_level = level_data['unlock']
@@ -219,24 +219,39 @@ class Level:
 			self.dust_sprite.add(fall_dust_particle)
 
 	def check_death(self):
+		check_death = self.player.sprite.rect.top > screen_height
+
 		if self.player.sprite.rect.top > screen_height:
-			self.create_overworld(self.current_level,0)
+			# self.create_overworld(self.current_level,0)
+			pass
+   
+		return check_death
 			
 	def check_win(self):
+		check_win = False
 		if pygame.sprite.spritecollide(self.player.sprite,self.goal,False):
-			self.create_overworld(self.current_level,self.new_max_level)
+			# self.create_overworld(self.current_level,self.new_max_level)
+			check_win = True
+		return check_win
 			
 	def check_coin_collisions(self):
+		check_coin = False
 		collided_coins = pygame.sprite.spritecollide(self.player.sprite,self.coin_sprites,True)
 		if collided_coins:
 			# self.coin_sound.play()
 			for coin in collided_coins:
 				self.change_coins(coin.value)
+				check_coin = True
+    
+		return check_coin
 
 	def check_enemy_collisions(self):
+		check_enemy = False
+		kill_enemy = False
 		enemy_collisions = pygame.sprite.spritecollide(self.player.sprite,self.enemy_sprites,False)
 
 		if enemy_collisions:
+			check_enemy = True
 			for enemy in enemy_collisions:
 				enemy_center = enemy.rect.centery
 				enemy_top = enemy.rect.top
@@ -247,8 +262,12 @@ class Level:
 					explosion_sprite = ParticleEffect(enemy.rect.center,'explosion')
 					self.explosion_sprites.add(explosion_sprite)
 					enemy.kill()
+
+					kill_enemy = True
 				else:
 					self.player.sprite.get_damage()
+     
+		return check_enemy, kill_enemy
 
 	def run(self):
 		# run the entire game / level 
@@ -306,11 +325,13 @@ class Level:
 		self.goal.update(self.world_shift)
 		self.goal.draw(self.display_surface)
 
-		self.check_death()
-		self.check_win()
+		check_death = self.check_death()
+		check_win = self.check_win()
 
-		self.check_coin_collisions()
-		self.check_enemy_collisions()
+		check_coin = self.check_coin_collisions()
+		check_enemy, kill_enemy = self.check_enemy_collisions()
 
 		# water 
 		self.water.draw(self.display_surface,self.world_shift)
+  
+		return check_death, check_win, check_coin, check_enemy, kill_enemy
