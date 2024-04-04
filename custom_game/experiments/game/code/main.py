@@ -94,7 +94,7 @@ while True:
 		else:
 			act = "stop"
 		space = keys[pygame.K_SPACE]
-		game.level.player.sprites()[0].get_input(act, space)
+		game.level.player.sprite.get_input(act, space)
   
 		print(game.coins)
 				
