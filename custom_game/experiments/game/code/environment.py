@@ -59,14 +59,17 @@ class CustomEnvironment:
         
         self.create_level(self.current_level)
         
+        while not self.level.player.sprite.on_ground:
+            self.run()
+        
         # set obs
         img = self.get_display_img()
         
         # set distance
         self.goal_dist = self.level.get_player_from_goal()
         
-        # pygame update
-        self.pygame_update()
+        # # pygame update
+        # self.pygame_update()
         
         return img
     
@@ -96,11 +99,11 @@ class CustomEnvironment:
         space = space == 1
         
         # action apply
-        self.level.player.sprite.get_intput(act, space)
+        self.level.player.sprite.get_input(act, space)
         check_death, check_win, check_coin, check_enemy, kill_enemy = self.run()
         
         # get next display after display update
-        self.pygame_update()
+        # self.pygame_update()
         next_obs = self.get_display_img()
         
         # get player distance from goal
@@ -135,7 +138,7 @@ class CustomEnvironment:
     
     def pygame_update(self):
         pygame.display.update()
-        self.clock.tick(60)
+        # self.clock.tick(30)
     
     def test_vidoe(self):
         
@@ -159,15 +162,6 @@ class CustomEnvironment:
                 # print(game.coins, game.level.get_player_from_goal())
                         
                 if event.type == pygame.QUIT:
-            
-                    # ### 게임 이미지 출력
-                    # screen = pygame.display.get_surface()
-                    # img = pygame.surfarray.array3d(screen)
-                    # img = img.transpose([1, 0, 2])
-                    # img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                    # img = cv2.resize(img, dsize=(0,0), fx=0.5, fy=0.5, interpolation=cv2.INTER_LINEAR)
-                    # cv2.imwrite("image.jpg", img)
-                    # #######################################
         
                     pygame.quit()
                     sys.exit()
@@ -191,9 +185,20 @@ class CustomEnvironment:
             self.clock.tick(60)
     
 
-### for debugging
+# ### for debugging
 # pygame.init()
 # screen = pygame.display.set_mode((screen_width,screen_height), flags=pygame.SHOWN) # flags=pygame.HIDDEN
 # env = CustomEnvironment(screen)
 
-# env.test_vidoe()
+# # env.test_vidoe()
+
+# idx = 0
+# obs = env.reset()
+    
+# while True:
+#     env.step(1,1)
+    
+#     for event in pygame.event.get():
+#         if event.type == pygame.QUIT:
+#             pygame.quit()
+#             sys.exit()
