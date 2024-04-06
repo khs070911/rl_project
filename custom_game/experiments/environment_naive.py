@@ -1,7 +1,6 @@
 import sys
 sys.path.append("game\code")
 
-import gym
 import cv2
 import numpy as np
 import pygame, sys, random
@@ -208,12 +207,13 @@ class CustomEnvironment:
 # ### for debugging
 # pygame.init()
 # screen = pygame.display.set_mode((1200, 700), flags=pygame.HIDDEN) # flags=pygame.HIDDEN pygame.SHOWN
-# env = CustomEnvironment(screen, size_rate=1.0, num_stack=4)
+# env = CustomEnvironment(screen, size_rate=0.2, num_stack=4)
 
 # # env.test_vidoe()
 
 # # # idx = 0
 # obs = env.reset()
+# print(obs.shape)
 # obs, _, _ = env.step(4)
 # obs, _, _ = env.step(4)
 
