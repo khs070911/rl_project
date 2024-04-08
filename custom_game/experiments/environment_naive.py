@@ -97,7 +97,8 @@ class CustomEnvironment:
             
             stack_img.append([img])
             
-        img = np.concatenate(stack_img)    
+        img = np.concatenate(stack_img)
+        # img = img.transpose([1, 2, 0])
         
         return img
     
