@@ -111,15 +111,20 @@ def train(args):
         scheduler.step()
         
     collector.shutdown()
+    
+    # model saving
+    torch.save(actor, "./models/actor.pt")
+    torch.save(critic, "./models/critic.pt")
+    
     return logs
     
 
 if __name__ == "__main__":
     args = {
-        "num_workers" : 3,
-        "total_frames" : 100,
-        "frames_per_batch" : 10,
-        "sub_batch_size" : 5,
+        "num_workers" : 4,
+        "total_frames" : 1000000,
+        "frames_per_batch" : 1000,
+        "sub_batch_size" : 50,
         
         "gamma" : 0.99,
         "lmbda" : 0.95,
