@@ -1,5 +1,7 @@
 import sys
-sys.path.append("game\code")
+
+sys.path.append("game/code") ## Mac
+sys.path.append("game\code") ## Window
 
 import cv2
 import numpy as np
@@ -206,10 +208,10 @@ class CustomEnvironment:
 
 # ### for debugging
 # pygame.init()
-# screen = pygame.display.set_mode((1200, 700), flags=pygame.HIDDEN) # flags=pygame.HIDDEN pygame.SHOWN
+# screen = pygame.display.set_mode((1200, 700), flags=pygame.SHOWN) # flags=pygame.HIDDEN pygame.SHOWN
 # env = CustomEnvironment(screen, size_rate=0.2, num_stack=4)
 
-# # env.test_vidoe()
+# env.test_vidoe()
 
 # # # idx = 0
 # obs = env.reset()

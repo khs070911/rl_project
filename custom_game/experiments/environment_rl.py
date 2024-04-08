@@ -7,12 +7,13 @@ import torch.nn as nn
 
 from torchrl.data import BoundedTensorSpec, UnboundedContinuousTensorSpec, DiscreteTensorSpec, CompositeSpec
 from torchrl.envs import (
-    EnvBase, Transform, TransformedEnv
+    EnvBase, ObservationNorm, TransformedEnv, Compose, StepCounter
 )
 from torchrl.envs.transforms.transforms import _apply_to_composite
 from torchrl.envs.utils import check_env_specs, step_mdp
 
 from environment_naive import CustomEnvironment
+from game.code.settings import screen_width, screen_height
 
 class EnvironmentForRL(EnvBase):
     
@@ -45,12 +46,12 @@ class EnvironmentForRL(EnvBase):
         
         self.action_spec = DiscreteTensorSpec(n=6)
         
-        self.reward = UnboundedContinuousTensorSpec(dtype=torch.int32)
+        self.reward = UnboundedContinuousTensorSpec()
         
     def _reset(self, tensordict):
         
         obs = self.naive_env.reset()
-        obs = torch.tensor(obs)
+        obs = torch.tensor(obs, dtype=torch.float32)
         
         state = TensorDict(
             {
@@ -77,13 +78,37 @@ class EnvironmentForRL(EnvBase):
         )
         
         return out
+
+def make_env(size_rate=0.2, num_stack=4):
+    screen = pygame.display.set_mode((screen_width, screen_height), flags=pygame.HIDDEN)
+    naive_env = CustomEnvironment(screen, size_rate=size_rate, num_stack=num_stack)
+    base_env = EnvironmentForRL(naive_env)
     
+    # return base_env
+    
+    env = TransformedEnv(
+        base_env,
+        Compose(
+            ObservationNorm(in_keys=["obs"]),
+            # StepCounter(step_count_key="step_count")
+        )
+    )
+    
+    return env
+    
+
 # ### for debugging
 # pygame.init()
 # screen = pygame.display.set_mode((1200, 700), flags=pygame.HIDDEN) # flags=pygame.HIDDEN pygame.SHOWN
 # naive_env = CustomEnvironment(screen, size_rate=0.2, num_stack=4)
 
 # env = EnvironmentForRL(naive_env)
-# # check_env_specs(env)
+# check_env_specs(env)
 # real_tensordict = env.rollout(3, return_contiguous=True)
 # print(real_tensordict[0]["action"])
+
+# pygame.init()
+# env = make_env()
+# env.transform[0].init_stats(num_iter=10, reduce_dim=0, cat_dim=0)
+# print("normalization constant shape:", env.transform[0].loc.shape)
+
