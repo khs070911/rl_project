@@ -34,8 +34,8 @@ class EnvironmentForRL(EnvBase):
     def _make_spec(self):
         
         self.pixel_spec = BoundedTensorSpec(
-            low=torch.zeros(4, 141, 240),
-            high=torch.ones(4, 141, 240) * 255,
+            low=torch.zeros(4, 140, 140),
+            high=torch.ones(4, 140, 140) * 255,
             dtype=torch.float32
         )
         

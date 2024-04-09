@@ -15,27 +15,27 @@ class Reshape(nn.Module):
         return x.view(self.shape)
 
 actor_net = nn.Sequential(
-    nn.Conv2d(4, 32, kernel_size=3, stride=3),
+    nn.Conv2d(4, 64, kernel_size=7, stride=2, padding="valid"),
     nn.ELU(),
-    nn.Conv2d(32, 32, kernel_size=3, stride=3),
+    nn.Conv2d(64, 64, kernel_size=5, stride=2, padding="valid"),
     nn.ELU(),
-    nn.Conv2d(32, 32, kernel_size=3, stride=3),
+    nn.Conv2d(64, 32, kernel_size=3, stride=2, padding="valid"),
     nn.Flatten(),
-    Reshape(shape=(-1, 1280)),
-    nn.Linear(1280, 64),
+    Reshape(shape=(-1, 7200)),
+    nn.Linear(7200, 64),
     nn.ELU(),
     nn.Linear(64, 6),
 )
 
 value_net = nn.Sequential(
-    nn.Conv2d(4, 32, kernel_size=3, stride=3),
+    nn.Conv2d(4, 64, kernel_size=7, stride=2, padding="valid"),
     nn.ELU(),
-    nn.Conv2d(32, 32, kernel_size=3, stride=3),
+    nn.Conv2d(64, 64, kernel_size=5, stride=2, padding="valid"),
     nn.ELU(),
-    nn.Conv2d(32, 32, kernel_size=3, stride=3),
+    nn.Conv2d(64, 32, kernel_size=3, stride=2, padding="valid"),
     nn.Flatten(),
-    Reshape(shape=(-1, 1280)),
-    nn.Linear(1280, 64),
+    Reshape(shape=(-1, 7200)),
+    nn.Linear(7200, 64),
     nn.ELU(),
     nn.Linear(64, 1),
 )

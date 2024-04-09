@@ -4,7 +4,7 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 
 import torch
-from torchrl.collectors import MultiSyncDataCollector
+from torchrl.collectors import MultiaSyncDataCollector
 from torchrl.objectives.value import GAE
 from torchrl.objectives import ClipPPOLoss
 from torchrl.data.replay_buffers import ReplayBuffer
@@ -38,7 +38,7 @@ def train(args):
     del env
     
     # collector
-    collector = MultiSyncDataCollector(
+    collector = MultiaSyncDataCollector(
         create_env_fn=[make_env]*num_workers,
         policy=actor,
         total_frames=total_frames,
@@ -67,7 +67,7 @@ def train(args):
     
     optimizer = torch.optim.Adam(loss_module.parameters(), lr=lr)
     # scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer=optimizer, base_lr=1e-6, step_size_up=5, max_lr=1e-4, gamma=0.9, mode="exp_range")
-    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer=optimizer, lr_lambda=lambda epoch: 0.95**epoch)
+    # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer=optimizer, lr_lambda=lambda epoch: 0.95**epoch)
     
     # training
     logs = defaultdict(list)
@@ -108,7 +108,7 @@ def train(args):
         desc = "Reward(avg) : {}, Max Step : {}".format(avg_reward, step_count)
         pbar.set_description(desc=desc)
         
-        scheduler.step()
+        # scheduler.step()
         
     collector.shutdown()
     
@@ -128,10 +128,10 @@ if __name__ == "__main__":
         
         "gamma" : 0.99,
         "lmbda" : 0.95,
-        "entropy_eps" : 1e-4,
+        "entropy_eps" : 1e-6,
         "clip_epsilon" : 0.2,
-        "lr" : 1e-4,
-        "num_epochs" : 3,
+        "lr" : 2e-4,
+        "num_epochs" : 1,
         "grad_clip" : 0
     }
     

@@ -75,6 +75,8 @@ class CustomEnvironment:
         # set distance
         self.goal_dist = self.level.get_player_from_goal()
         
+        # set current dist
+        self.prev_dist = self.goal_dist
         # # pygame update
         # self.pygame_update()
         
@@ -130,6 +132,8 @@ class CustomEnvironment:
         
         # get player distance from goal
         cur_dist = self.level.get_player_from_goal()
+        dist_cur_prev_diff = cur_dist - self.prev_dist
+        self.prev_dist = cur_dist
         
         # set reward & done
         if check_death or self.cur_health <= 0 or check_win:
@@ -142,7 +146,7 @@ class CustomEnvironment:
             reward = 10
         if check_coin or kill_enemy:
             reward = 5
-        if cur_dist < self.goal_dist:
+        if dist_cur_prev_diff > 0:
             reward += 1
         else:
             reward -= 1
@@ -209,7 +213,7 @@ class CustomEnvironment:
 
 # ### for debugging
 # pygame.init()
-# screen = pygame.display.set_mode((1200, 700), flags=pygame.SHOWN) # flags=pygame.HIDDEN pygame.SHOWN
+# screen = pygame.display.set_mode((700, 700), flags=pygame.SHOWN) # flags=pygame.HIDDEN pygame.SHOWN
 # env = CustomEnvironment(screen, size_rate=0.2, num_stack=4)
 
 # env.test_vidoe()
@@ -223,10 +227,10 @@ class CustomEnvironment:
 # 이미지를 윈도우에 표시합니다.
 # cv2.imshow('Image', obs[-1])
 
-# # 사용자가 키보드의 아무 키나 누를 때까지 대기합니다.
+# 사용자가 키보드의 아무 키나 누를 때까지 대기합니다.
 # cv2.waitKey(0)
 
-# # 모든 윈도우를 닫습니다.
+# 모든 윈도우를 닫습니다.
 # cv2.destroyAllWindows()
 
 # # for _ in range(10):
