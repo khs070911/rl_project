@@ -12,7 +12,7 @@ from game.code.ui import UI
 
 class CustomEnvironment:
     
-    def __init__(self, screen, num_stack=4, size_rate=0.2):
+    def __init__(self, screen, max_step_per_episode=700, num_stack=4, size_rate=0.2):
         
         # Pygame setup
         self.screen = screen
@@ -33,6 +33,9 @@ class CustomEnvironment:
         # for observation setting
         self.num_stack = num_stack
         self.size_rate = size_rate
+        
+        # step setting
+        self.max_step = max_step_per_episode
         
     def create_level(self, level):
         self.level = Level(level, self.screen, self.change_coins,self.change_health)
@@ -63,6 +66,7 @@ class CustomEnvironment:
         
         self.cur_health = 100
         self.coins = 0
+        self.cur_step = 0
         
         self.create_level(self.current_level)
         
@@ -118,7 +122,7 @@ class CustomEnvironment:
         if act == 1:
             act = "right"
         elif act == 2:
-            act == "left"
+            act = "left"
         else:
             act = "stop"
         
@@ -135,8 +139,11 @@ class CustomEnvironment:
         dist_cur_prev_diff = cur_dist - self.prev_dist
         self.prev_dist = cur_dist
         
+        # increase step count
+        self.cur_step += 1
+        
         # set reward & done
-        if check_death or self.cur_health <= 0 or check_win:
+        if check_death or self.cur_health <= 0 or check_win or self.cur_step >= self.max_step:
             done = True
         else:
             done = False
@@ -146,7 +153,7 @@ class CustomEnvironment:
             reward = 10
         if check_coin or kill_enemy:
             reward = 5
-        if dist_cur_prev_diff > 0:
+        if dist_cur_prev_diff < 0:
             reward += 1
         else:
             reward -= 1
@@ -155,9 +162,6 @@ class CustomEnvironment:
             reward = -10
         if check_enemy:
             reward = -5
-        
-        # set cur dist 
-        self.goal_dist = cur_dist
         
         return next_obs, reward, done
         
@@ -214,13 +218,17 @@ class CustomEnvironment:
 # ### for debugging
 # pygame.init()
 # screen = pygame.display.set_mode((700, 700), flags=pygame.SHOWN) # flags=pygame.HIDDEN pygame.SHOWN
-# env = CustomEnvironment(screen, size_rate=0.2, num_stack=4)
+# env = CustomEnvironment(screen, size_rate=1, num_stack=10)
 
 # env.test_vidoe()
 
 # # # idx = 0
 # obs = env.reset()
 # print(obs.shape)
+
+# for i in range(2):
+#     obs, _, _ = env.step(1)
+    
 # obs, _, _ = env.step(4)
 # obs, _, _ = env.step(4)
 

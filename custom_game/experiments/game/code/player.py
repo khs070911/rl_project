@@ -103,7 +103,7 @@ class Player(pygame.sprite.Sprite):
 			self.facing_right = True
 		elif act == "left":
 			self.direction.x = -1
-			self.facing_right = False
+			self.facing_left = False
 		else:
 			self.direction.x = 0
 

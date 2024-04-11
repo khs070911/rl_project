@@ -4,7 +4,8 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 
 import torch
-from torchrl.collectors import MultiaSyncDataCollector
+from torchrl.collectors import SyncDataCollector, MultiSyncDataCollector
+from torchrl.envs.utils import ExplorationType, set_exploration_type
 from torchrl.objectives.value import GAE
 from torchrl.objectives import ClipPPOLoss
 from torchrl.data.replay_buffers import ReplayBuffer
@@ -35,11 +36,10 @@ def train(args):
     env = make_env(pygame_init=False)
     actor, critic = make_actor_critic(env.action_spec)
     
-    del env
-    
     # collector
-    collector = MultiaSyncDataCollector(
+    collector = MultiSyncDataCollector(
         create_env_fn=[make_env]*num_workers,
+        # env,
         policy=actor,
         total_frames=total_frames,
         frames_per_batch=frames_per_batch,
@@ -72,7 +72,8 @@ def train(args):
     # training
     logs = defaultdict(list)
     optimizer.zero_grad()
-    pbar = tqdm(total=total_frames)
+    # pbar = tqdm(total=total_frames)
+    curr_step = 0
     
     for i, tensordict_data in enumerate(collector):
         
@@ -98,15 +99,31 @@ def train(args):
                 optimizer.step()
                 optimizer.zero_grad()
                 
-        pbar.update(tensordict_data.numel())
+        # pbar.update(tensordict_data.numel())
         
-        avg_reward = tensordict_data["next", "reward"].mean().item()
-        step_count = tensordict_data["step_count"].max().item()
+        if i % 1 == 0:
+            with torch.no_grad():
+                eval_rollout = env.rollout(700, actor)
+                
+                avg_reward = eval_rollout["next", "reward"].sum().item()
+                step_count = eval_rollout["step_count"].max().item()
+                
+                logs["reward"].append(avg_reward)
+                logs["max_step"].append(step_count)
+                
+                curr_step += tensordict_data.numel()
+                
+                desc = "Current Step: {} , Reward(sum): {}, Max Step: {}".format(curr_step, avg_reward, step_count)
+                print(desc)
+                # pbar.set_description(desc=desc)
         
-        logs["reward"].append(avg_reward)
-        logs["max_step"].append(step_count)
-        desc = "Reward(avg) : {}, Max Step : {}".format(avg_reward, step_count)
-        pbar.set_description(desc=desc)
+        # avg_reward = tensordict_data["next", "reward"].mean().item()
+        # step_count = tensordict_data["step_count"].max().item()
+        
+        # logs["reward"].append(avg_reward)
+        # logs["max_step"].append(step_count)
+        # desc = "Reward(avg) : {}, Max Step : {}".format(avg_reward, step_count)
+        # pbar.set_description(desc=desc)
         
         # scheduler.step()
         
@@ -129,7 +146,7 @@ if __name__ == "__main__":
         "gamma" : 0.99,
         "lmbda" : 0.95,
         "entropy_eps" : 1e-6,
-        "clip_epsilon" : 0.2,
+        "clip_epsilon" : 0.9,
         "lr" : 2e-4,
         "num_epochs" : 1,
         "grad_clip" : 0
@@ -147,6 +164,4 @@ if __name__ == "__main__":
     plt.title("Max Step Count")
     
     plt.savefig("result.png")
-    
-    
     
