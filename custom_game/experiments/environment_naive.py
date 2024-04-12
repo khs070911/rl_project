@@ -12,7 +12,7 @@ from game.code.ui import UI
 
 class CustomEnvironment:
     
-    def __init__(self, screen, max_step_per_episode=700, num_stack=4, size_rate=0.2):
+    def __init__(self, screen, max_step_per_episode=300, num_stack=4, size_rate=0.2):
         
         # Pygame setup
         self.screen = screen
@@ -74,7 +74,7 @@ class CustomEnvironment:
             self.run()
         
         # set obs
-        img = self.get_display_img()
+        img, _ = self.get_display_img()
         
         # set distance
         self.goal_dist = self.level.get_player_from_goal()
@@ -91,8 +91,21 @@ class CustomEnvironment:
         stack_img = []
         # self.level.player.sprite.get_input("stop", False)
         
+        death_list = []
+        win_list = []
+        coin_list = []
+        enemy_list = []
+        kill_list = []
+        
+        
         for i in range(self.num_stack):
-            self.run()
+            check_death, check_win, check_coin, check_enemy, kill_enemy = self.run()
+            
+            death_list.append(check_death)
+            win_list.append(check_win)
+            coin_list.append(check_coin)
+            enemy_list.append(check_enemy)
+            kill_list.append(kill_enemy)
             
             # state
             screen = pygame.display.get_surface()
@@ -106,7 +119,16 @@ class CustomEnvironment:
         img = np.concatenate(stack_img)
         # img = img.transpose([1, 2, 0])
         
-        return img
+        agg_info = {
+            "check_death" : sum(death_list) > 0,
+            "check_win" : sum(win_list) > 0,
+            "check_coin" : sum(coin_list) > 0,
+            "check_enemy" : sum(enemy_list) > 0,
+            "kill_enemy" : sum(kill_list) > 0
+            
+        }
+        
+        return img, agg_info
     
     def step(self, act):
         """
@@ -128,11 +150,16 @@ class CustomEnvironment:
         
         # action apply
         self.level.player.sprite.get_input(act, space)
-        check_death, check_win, check_coin, check_enemy, kill_enemy = self.run()
+        # check_death, check_win, check_coin, check_enemy, kill_enemy = self.run()
         
         # get next display after display update
         # self.pygame_update()
-        next_obs = self.get_display_img()
+        next_obs, agg_info = self.get_display_img()
+        check_death = agg_info["check_death"]
+        check_win = agg_info["check_win"]
+        check_coin  = agg_info["check_coin"] 
+        check_enemy = agg_info["check_enemy"]
+        kill_enemy = agg_info["kill_enemy"]
         
         # get player distance from goal
         cur_dist = self.level.get_player_from_goal()

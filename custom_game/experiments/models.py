@@ -15,29 +15,29 @@ class Reshape(nn.Module):
         return x.view(self.shape)
 
 actor_net = nn.Sequential(
-    nn.Conv2d(4, 64, kernel_size=7, stride=2, padding="valid"),
+    nn.Conv2d(4, 32, kernel_size=7, stride=2, padding="valid"),
     nn.ELU(),
-    nn.Conv2d(64, 64, kernel_size=5, stride=2, padding="valid"),
+    nn.Conv2d(32, 32, kernel_size=5, stride=2, padding="valid"),
     nn.ELU(),
-    nn.Conv2d(64, 32, kernel_size=3, stride=2, padding="valid"),
+    nn.Conv2d(32, 16, kernel_size=3, stride=2, padding="valid"),
     nn.Flatten(),
-    Reshape(shape=(-1, 7200)),
-    nn.Linear(7200, 64),
+    Reshape(shape=(-1, 3600)),
+    nn.Linear(3600, 16),
     nn.ELU(),
-    nn.Linear(64, 6),
+    nn.Linear(16, 6),
 )
 
 value_net = nn.Sequential(
-    nn.Conv2d(4, 64, kernel_size=7, stride=2, padding="valid"),
+    nn.Conv2d(4, 32, kernel_size=7, stride=2, padding="valid"),
     nn.ELU(),
-    nn.Conv2d(64, 64, kernel_size=5, stride=2, padding="valid"),
+    nn.Conv2d(32, 32, kernel_size=5, stride=2, padding="valid"),
     nn.ELU(),
-    nn.Conv2d(64, 32, kernel_size=3, stride=2, padding="valid"),
+    nn.Conv2d(32, 16, kernel_size=3, stride=2, padding="valid"),
     nn.Flatten(),
-    Reshape(shape=(-1, 7200)),
-    nn.Linear(7200, 64),
+    Reshape(shape=(-1, 3600)),
+    nn.Linear(3600, 16),
     nn.ELU(),
-    nn.Linear(64, 1),
+    nn.Linear(16, 1),
 )
 
 def make_actor_critic(action_spec):

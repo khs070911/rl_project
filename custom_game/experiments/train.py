@@ -11,6 +11,8 @@ from torchrl.objectives import ClipPPOLoss
 from torchrl.data.replay_buffers import ReplayBuffer
 from torchrl.data.replay_buffers.samplers import SamplerWithoutReplacement
 from torchrl.data.replay_buffers.storages import LazyTensorStorage
+from torchrl.modules.tensordict_module import EGreedyModule
+from tensordict.nn import TensorDictSequential
 
 from environment_rl import make_env
 from models import make_actor_critic
@@ -67,7 +69,7 @@ def train(args):
     
     optimizer = torch.optim.Adam(loss_module.parameters(), lr=lr)
     # scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer=optimizer, base_lr=1e-6, step_size_up=5, max_lr=1e-4, gamma=0.9, mode="exp_range")
-    # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer=optimizer, lr_lambda=lambda epoch: 0.95**epoch)
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer=optimizer, lr_lambda=lambda epoch: 0.95**epoch)
     
     # training
     logs = defaultdict(list)
@@ -81,7 +83,8 @@ def train(args):
             
             adv_module(tensordict_data)
             replay_buffer.extend(tensordict_data)
-            for _ in range(frames_per_batch // sub_batch_size):
+            
+            for _ in tqdm(range(frames_per_batch // sub_batch_size)):
                 subdata = replay_buffer.sample(sub_batch_size)
                 loss_dict = loss_module(subdata)
                 loss_value = (
@@ -103,7 +106,7 @@ def train(args):
         
         if i % 1 == 0:
             with torch.no_grad():
-                eval_rollout = env.rollout(700, actor)
+                eval_rollout = env.rollout(300, actor)
                 
                 avg_reward = eval_rollout["next", "reward"].sum().item()
                 step_count = eval_rollout["step_count"].max().item()
@@ -125,7 +128,7 @@ def train(args):
         # desc = "Reward(avg) : {}, Max Step : {}".format(avg_reward, step_count)
         # pbar.set_description(desc=desc)
         
-        # scheduler.step()
+            scheduler.step()
         
     collector.shutdown()
     
@@ -139,16 +142,16 @@ def train(args):
 if __name__ == "__main__":
     args = {
         "num_workers" : 4,
-        "total_frames" : 1000000,
+        "total_frames" : 20000,
         "frames_per_batch" : 1000,
-        "sub_batch_size" : 50,
+        "sub_batch_size" : 10,
         
         "gamma" : 0.99,
         "lmbda" : 0.95,
-        "entropy_eps" : 1e-6,
+        "entropy_eps" : 1e-2,
         "clip_epsilon" : 0.9,
-        "lr" : 2e-4,
-        "num_epochs" : 1,
+        "lr" : 1.41e-5,
+        "num_epochs" : 2,
         "grad_clip" : 0
     }
     

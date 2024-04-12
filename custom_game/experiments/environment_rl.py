@@ -105,11 +105,14 @@ class ObsScaling(Transform):
             device=observation_spec.device
         )
 
-def make_env(size_rate=0.2, num_stack=4, transform=True, pygame_init=True):
+def make_env(size_rate=0.2, num_stack=4, transform=False, pygame_init=True, show=False):
     if pygame_init:
         pygame.init()
     
-    screen = pygame.display.set_mode((screen_width, screen_height), flags=pygame.HIDDEN)
+    if show:
+        screen = pygame.display.set_mode((screen_width, screen_height), flags=pygame.SHOWN)
+    else:
+        screen = pygame.display.set_mode((screen_width, screen_height), flags=pygame.HIDDEN)
     naive_env = CustomEnvironment(screen, size_rate=size_rate, num_stack=num_stack)
     base_env = EnvironmentForRL(naive_env)
     
@@ -124,7 +127,13 @@ def make_env(size_rate=0.2, num_stack=4, transform=True, pygame_init=True):
             )
         )
     else:
-        env = base_env
+        # env = base_env
+        env = TransformedEnv(
+            base_env,
+            Compose(
+                StepCounter(step_count_key="step_count")
+            )
+        )
     
     return env
 
