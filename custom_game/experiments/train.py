@@ -4,15 +4,13 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 
 import torch
-from torchrl.collectors import SyncDataCollector, MultiSyncDataCollector
-from torchrl.envs.utils import ExplorationType, set_exploration_type
+from torchrl.collectors import MultiaSyncDataCollector
+# from torchrl.envs.utils import ExplorationType, set_exploration_type
 from torchrl.objectives.value import GAE
 from torchrl.objectives import ClipPPOLoss
 from torchrl.data.replay_buffers import ReplayBuffer
 from torchrl.data.replay_buffers.samplers import SamplerWithoutReplacement
 from torchrl.data.replay_buffers.storages import LazyTensorStorage
-from torchrl.modules.tensordict_module import EGreedyModule
-from tensordict.nn import TensorDictSequential
 
 from environment_rl import make_env
 from models import make_actor_critic
@@ -35,25 +33,27 @@ def train(args):
     
     # actor-critic
     pygame.init()
-    env = make_env(pygame_init=False)
+    env = make_env(transform=True, pygame_init=False)
     actor, critic = make_actor_critic(env.action_spec)
+    actor = actor.double()
+    critic = critic.double()
     
     # collector
-    collector = MultiSyncDataCollector(
+    collector = MultiaSyncDataCollector(
         create_env_fn=[make_env]*num_workers,
         # env,
         policy=actor,
         total_frames=total_frames,
         frames_per_batch=frames_per_batch,
-        reset_at_each_iter=True,
+        reset_at_each_iter=False,
         split_trajs=False
     )
     
-    # replay buffer
-    replay_buffer = ReplayBuffer(
-        storage=LazyTensorStorage(max_size=frames_per_batch),
-        sampler=SamplerWithoutReplacement(),
-    )
+    # # replay buffer
+    # replay_buffer = ReplayBuffer(
+    #     storage=LazyTensorStorage(max_size=frames_per_batch),
+    #     sampler=SamplerWithoutReplacement(),
+    # )
     
     # setting for training
     adv_module = GAE(gamma=gamma, lmbda=lmbda, value_network=critic, average_gae=True)
@@ -69,23 +69,25 @@ def train(args):
     
     optimizer = torch.optim.Adam(loss_module.parameters(), lr=lr)
     # scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer=optimizer, base_lr=1e-6, step_size_up=5, max_lr=1e-4, gamma=0.9, mode="exp_range")
-    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer=optimizer, lr_lambda=lambda epoch: 0.95**epoch)
+    # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer=optimizer, lr_lambda=lambda epoch: 0.99999**epoch)
     
     # training
     logs = defaultdict(list)
-    optimizer.zero_grad()
     # pbar = tqdm(total=total_frames)
     curr_step = 0
+    max_reward = 0
     
     for i, tensordict_data in enumerate(collector):
         
         for _ in range(num_epochs):
             
             adv_module(tensordict_data)
-            replay_buffer.extend(tensordict_data)
+            # replay_buffer.extend(tensordict_data)
             
-            for _ in tqdm(range(frames_per_batch // sub_batch_size)):
-                subdata = replay_buffer.sample(sub_batch_size)
+            for i in range(frames_per_batch // sub_batch_size):
+                # subdata = replay_buffer.sample(sub_batch_size)
+                # print(subdata.shape)
+                subdata = tensordict_data[i*frames_per_batch:(i+1)*frames_per_batch]
                 loss_dict = loss_module(subdata)
                 loss_value = (
                     loss_dict["loss_objective"] 
@@ -97,10 +99,13 @@ def train(args):
                 
                 # gradient clipping
                 if bool(grad_clip):
+                    # print("Gradient Clipping")
                     torch.nn.utils.clip_grad_norm_(loss_module.parameters(), grad_clip)
 
                 optimizer.step()
                 optimizer.zero_grad()
+                
+        # scheduler.step()
                 
         # pbar.update(tensordict_data.numel())
         
@@ -108,16 +113,25 @@ def train(args):
             with torch.no_grad():
                 eval_rollout = env.rollout(300, actor)
                 
-                avg_reward = eval_rollout["next", "reward"].sum().item()
+                sum_reward = eval_rollout["next", "reward"].sum().item()
                 step_count = eval_rollout["step_count"].max().item()
                 
-                logs["reward"].append(avg_reward)
+                logs["reward"].append(sum_reward)
                 logs["max_step"].append(step_count)
                 
                 curr_step += tensordict_data.numel()
                 
-                desc = "Current Step: {} , Reward(sum): {}, Max Step: {}".format(curr_step, avg_reward, step_count)
+                desc = "Current Step: {} , Reward(sum): {}, Max Step: {}".format(curr_step, sum_reward, step_count)
                 print(desc)
+                
+            if sum_reward > 0 and sum_reward > max_reward:
+                max_reward = sum_reward
+                
+                # checkpoint model saving
+                torch.save(actor, "./models/actor_checkpoint.pt")
+                torch.save(critic, "./models/critic_checkpoint.pt")
+                print("Saved CheckPoint Model")
+                
                 # pbar.set_description(desc=desc)
         
         # avg_reward = tensordict_data["next", "reward"].mean().item()
@@ -128,7 +142,6 @@ def train(args):
         # desc = "Reward(avg) : {}, Max Step : {}".format(avg_reward, step_count)
         # pbar.set_description(desc=desc)
         
-            scheduler.step()
         
     collector.shutdown()
     
@@ -142,16 +155,16 @@ def train(args):
 if __name__ == "__main__":
     args = {
         "num_workers" : 4,
-        "total_frames" : 20000,
-        "frames_per_batch" : 1000,
-        "sub_batch_size" : 10,
+        "total_frames" : 200000,
+        "frames_per_batch" : 64,
+        "sub_batch_size" : 64,
         
         "gamma" : 0.99,
         "lmbda" : 0.95,
         "entropy_eps" : 1e-2,
-        "clip_epsilon" : 0.9,
-        "lr" : 1.41e-5,
-        "num_epochs" : 2,
+        "clip_epsilon" : 0.3,
+        "lr" : 1.41e-4,
+        "num_epochs" : 1,
         "grad_clip" : 0
     }
     

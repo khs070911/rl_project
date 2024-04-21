@@ -55,7 +55,7 @@ class EnvironmentForRL(EnvBase):
             tensordict = gen_params(batch_size=32)
         
         obs = self.naive_env.reset()
-        obs = torch.tensor(obs, dtype=torch.float32)
+        obs = torch.tensor(obs, dtype=torch.float64)
         
         state = TensorDict(
             {
@@ -74,8 +74,8 @@ class EnvironmentForRL(EnvBase):
         act = act.argmax().item()
         
         next_obs, reward, done = self.naive_env.step(act)
-        next_obs = torch.tensor(next_obs, dtype=torch.float32)
-        reward = torch.tensor(reward, dtype=torch.float32)
+        next_obs = torch.tensor(next_obs, dtype=torch.float64)
+        reward = torch.tensor(reward, dtype=torch.float64)
         done = torch.tensor(done)
         
         out = TensorDict(
@@ -105,7 +105,7 @@ class ObsScaling(Transform):
             device=observation_spec.device
         )
 
-def make_env(size_rate=0.2, num_stack=4, transform=False, pygame_init=True, show=False):
+def make_env(size_rate=0.2, num_stack=4, transform=True, pygame_init=True, show=False):
     if pygame_init:
         pygame.init()
     

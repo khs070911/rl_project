@@ -114,6 +114,7 @@ class CustomEnvironment:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             img = cv2.resize(img, dsize=(0,0), fx=self.size_rate, fy=self.size_rate, interpolation=cv2.INTER_LINEAR)
             
+            
             stack_img.append([img])
             
         img = np.concatenate(stack_img)
@@ -182,8 +183,10 @@ class CustomEnvironment:
             reward = 5
         if dist_cur_prev_diff < 0:
             reward += 1
+        elif dist_cur_prev_diff == 0:
+            reward += 0
         else:
-            reward -= 1
+            reward += -1
             
         if check_death:
             reward = -10
@@ -230,6 +233,7 @@ class CustomEnvironment:
                 print("add coin")
             if check_enemy and not kill_enemy:
                 print("damage from enemy")
+                print(self.cur_health)
             if check_enemy and kill_enemy:
                 print("kill enemy")
             if check_win:
@@ -245,27 +249,28 @@ class CustomEnvironment:
 # ### for debugging
 # pygame.init()
 # screen = pygame.display.set_mode((700, 700), flags=pygame.SHOWN) # flags=pygame.HIDDEN pygame.SHOWN
-# env = CustomEnvironment(screen, size_rate=1, num_stack=10)
+# env = CustomEnvironment(screen, size_rate=1, num_stack=4)
 
 # env.test_vidoe()
 
-# # # idx = 0
+# # # # idx = 0
 # obs = env.reset()
-# print(obs.shape)
+# print(obs.dtype)
 
-# for i in range(2):
-#     obs, _, _ = env.step(1)
+# for i in range(4):
+#     obs, reward, _ = env.step(0)
+#     print(reward)
     
-# obs, _, _ = env.step(4)
-# obs, _, _ = env.step(4)
+# # obs, _, _ = env.step(4)
+# # obs, _, _ = env.step(4)
 
-# 이미지를 윈도우에 표시합니다.
+# # 이미지를 윈도우에 표시합니다.
 # cv2.imshow('Image', obs[-1])
 
-# 사용자가 키보드의 아무 키나 누를 때까지 대기합니다.
+# # 사용자가 키보드의 아무 키나 누를 때까지 대기합니다.
 # cv2.waitKey(0)
 
-# 모든 윈도우를 닫습니다.
+# # 모든 윈도우를 닫습니다.
 # cv2.destroyAllWindows()
 
 # # for _ in range(10):
