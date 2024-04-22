@@ -64,7 +64,7 @@ def train(args):
         entropy_bonus=bool(entropy_eps),
         entropy_coef=entropy_eps,
         critic_coef=1.0,
-        loss_critic_type="smooth_l1"
+        loss_critic_type="l2"
     )
     
     optimizer = torch.optim.Adam(loss_module.parameters(), lr=lr)
@@ -161,9 +161,9 @@ if __name__ == "__main__":
         
         "gamma" : 0.99,
         "lmbda" : 0.95,
-        "entropy_eps" : 1e-2,
-        "clip_epsilon" : 0.3,
-        "lr" : 1.41e-4,
+        "entropy_eps" : 8e-3,
+        "clip_epsilon" : 0.2,
+        "lr" : 4.41e-5,
         "num_epochs" : 1,
         "grad_clip" : 0
     }
